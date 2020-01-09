@@ -1,0 +1,23 @@
+sudo: required
+services:
+    - docker
+
+
+before_install:
+    - docker build -t ssendy/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true ssendy/react-test npm test
+
+after_success:
+    - docker build -t ssendy/multi-client ./client
+    - docker build -t ssendy/multi-nginx ./nginx
+    - docker build -t ssendy/multi-server ./server
+    - docker build -t ssendy/multi-worker ./worker
+    #login to docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    #take images and push them to docker hub
+    - docker push ssendy/multi-client
+    - docker push ssendy/multi-nginx
+    - docker push ssendy/multi-server
+    - docker push ssendy/multi-worker
